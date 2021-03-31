@@ -1,11 +1,10 @@
 
 # XT_XWF-OCR
 
-
 ### XT_XWF-OCR X-Tension by Ted Smith
    Most recently tested on XWF : v20.0
 
-###  *** Requirements ***
+### Requirements 
   This X-Tension is designed for use only with X-Ways Forensics, x86 edition
   This X-Tension is designed for use only with v19.1 of X-Ways Forensics or later.
   This X-Tension is not designed for use on Linux or OSX platforms.
@@ -43,10 +42,10 @@
   
   pacman -S mingw-w64-x86_64-tesseract-ocr
 
-###  *** Usage Disclaimer ***
+### Usage Disclaimer 
   PRODUCTION USE STATUS : Proof of Concept Prototype
 
-###  *** Functionality Overview ***
+### Functionality Overview 
   The X-Tension will examine every picture file. If it is a confirmed picture file
   larger than 2Kb, it will attempt to conduct OCR and generate a text file
   containing the output. These can be filtered for recursively post execution
@@ -54,7 +53,7 @@
 
   Execution Method : "Refine Volume Snapshot" (RVS, F10)
 
-###  TODOs
+### TODOs
      Make 64-bit ready by creating Leptonica and Tesseract 64-bit DLLs
 
 ### Licenses
@@ -77,7 +76,7 @@
   https://github.com/DanBloomberg/leptonica
 
 
-###  *** Collaboration ***
+### Collaboration 
   Collaboration is welcomed, particularly from Delphi or Freepascal developers.
   This version was created using the Lazarus IDE v2.0.12 and Freepascal v3.2.0.
   (www.lazarus-ide.org), 32-bit edition  
