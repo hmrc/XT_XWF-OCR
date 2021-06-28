@@ -26,7 +26,8 @@ unit tesseractocr.capi;
 interface
 uses
   tesseractocr.leptonica,
-  tesseractocr.consts;
+  tesseractocr.consts,
+Windows;
 
 type
   TessResultRenderer = Pointer;
@@ -452,6 +453,9 @@ begin
 end;
 
 function InitTesseractLib: Boolean;
+VAR
+  FULL_LIB_PATH : ansistring;
+  PATH_OF_DLL : ansistring;
 
   function GetTesseractProcAddress(var AProcPtr: Pointer; AProcName: AnsiString): Boolean;
   begin
@@ -461,135 +465,157 @@ function InitTesseractLib: Boolean;
       raise Exception.Create('Error while loading Tesseract function: ' + String(AProcName));
   end;
 
+  // Calls GetModuleFileName which is used to call the path of a calling DLL
+  // as opposed to the parent application that called the DLL (for which Application.ExeName is used)
+  function GetModuleName : ansistring;
+  var
+    szDLLName: array[0..MAX_PATH] of Char;
+  begin
+    FillChar(szDLLName, SizeOf(szDLLName), #0);
+    GetModuleFileName(hInstance, szDLLName, MAX_PATH);
+    Result := szDLLName;
+  end;
+
 begin
   Result := False;
 
   if (hTesseractLib = 0) then
   begin
-    hTesseractLib := LoadLibrary({$IFDEF FPC}libtesseract{$ELSE}PChar(libtesseract){$ENDIF});
-    if (hTesseractLib <> 0) then
+    // Returns the path and filename of the DLL itself
+    PATH_OF_DLL := GetModuleName;
+    // Now strip out the DLL name, leaving the path, and append the libtesseract filename to it
+    FULL_LIB_PATH := ExtractFilePath(PATH_OF_DLL) + libtesseract;
+    // Now check the libtesseract library exists
+    if FileExists(FULL_LIB_PATH) then
     begin
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessVersion{$IFDEF FPC}){$ENDIF}, 'TessVersion');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteText{$IFDEF FPC}){$ENDIF}, 'TessDeleteText');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteTextArray{$IFDEF FPC}){$ENDIF}, 'TessDeleteTextArray');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteIntArray{$IFDEF FPC}){$ENDIF}, 'TessDeleteIntArray');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessTextRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessTextRendererCreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessHOcrRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessHOcrRendererCreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessHOcrRendererCreate2{$IFDEF FPC}){$ENDIF}, 'TessHOcrRendererCreate2');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPDFRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessPDFRendererCreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessUnlvRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessUnlvRendererCreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBoxTextRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessBoxTextRendererCreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteResultRenderer{$IFDEF FPC}){$ENDIF}, 'TessDeleteResultRenderer');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererInsert{$IFDEF FPC}){$ENDIF}, 'TessResultRendererInsert');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererNext{$IFDEF FPC}){$ENDIF}, 'TessResultRendererNext');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererBeginDocument{$IFDEF FPC}){$ENDIF}, 'TessResultRendererBeginDocument');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererAddImage{$IFDEF FPC}){$ENDIF}, 'TessResultRendererAddImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererEndDocument{$IFDEF FPC}){$ENDIF}, 'TessResultRendererEndDocument');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererExtention{$IFDEF FPC}){$ENDIF}, 'TessResultRendererExtention');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererTitle{$IFDEF FPC}){$ENDIF}, 'TessResultRendererTitle');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererImageNum{$IFDEF FPC}){$ENDIF}, 'TessResultRendererImageNum');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPICreate{$IFDEF FPC}){$ENDIF}, 'TessBaseAPICreate');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIDelete{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIDelete');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetOpenCLDevice{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetOpenCLDevice');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetInputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetInputName');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInputName');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetInputImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetInputImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInputImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInputImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetSourceYResolution{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetSourceYResolution');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetDatapath{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetDatapath');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetOutputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetOutputName');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetDebugVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetDebugVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetIntVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetIntVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetBoolVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetBoolVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetDoubleVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetDoubleVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetStringVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetStringVariable');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIPrintVariables{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIPrintVariables');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIPrintVariablesToFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIPrintVariablesToFile');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit1');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit2{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit2');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit3{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit3');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit4{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit4');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInitLanguagesAsString{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInitLanguagesAsString');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetLoadedLanguagesAsVector{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetLoadedLanguagesAsVector');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetAvailableLanguagesAsVector{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetAvailableLanguagesAsVector');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInitLangMod{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInitLangMod');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInitForAnalysePage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInitForAnalysePage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIReadConfigFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIReadConfigFile');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIReadDebugConfigFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIReadDebugConfigFile');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetPageSegMode{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetPageSegMode');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetPageSegMode{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetPageSegMode');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRect{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRect');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIClearAdaptiveClassifier{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIClearAdaptiveClassifier');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetImage2{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetImage2');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetSourceResolution{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetSourceResolution');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetRectangle{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetRectangle');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetThresholdedImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetThresholdedImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetRegions{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetRegions');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextlines{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextlines');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextlines1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextlines1');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetStrips{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetStrips');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetWords{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetWords');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetConnectedComponents{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetConnectedComponents');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetComponentImages{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetComponentImages');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetComponentImages1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetComponentImages1');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetThresholdedImageScaleFactor{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetThresholdedImageScaleFactor');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAnalyseLayout{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAnalyseLayout');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRecognize{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRecognize');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRecognizeForChopTest{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRecognizeForChopTest');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIProcessPages{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIProcessPages');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIProcessPage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIProcessPage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetIterator{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetIterator');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetMutableIterator{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetMutableIterator');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUTF8Text');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetHOCRText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetHOCRText');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetBoxText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetBoxText');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUNLVText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUNLVText');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIMeanTextConf{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIMeanTextConf');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAllWordConfidences{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAllWordConfidences');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAdaptToWordStr{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAdaptToWordStr');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIClear{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIClear');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIEnd{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIEnd');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIIsValidWord{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIIsValidWord');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextDirection{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextDirection');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUnichar{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUnichar');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetMinOrientationMargin{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetMinOrientationMargin');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorDelete');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorCopy{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorCopy');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBegin{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBegin');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorNext');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorIsAtBeginningOf{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorIsAtBeginningOf');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorIsAtFinalElement{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorIsAtFinalElement');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBoundingBox{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBoundingBox');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBlockType{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBlockType');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorGetBinaryImage{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorGetBinaryImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorGetImage{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorGetImage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBaseline{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBaseline');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorOrientation{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorOrientation');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorParagraphInfo{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorParagraphInfo');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorDelete');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorCopy{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorCopy');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetPageIterator{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetPageIterator');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetPageIteratorConst{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetPageIteratorConst');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetChoiceIterator{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetChoiceIterator');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorNext');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetUTF8Text');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorConfidence{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorConfidence');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordRecognitionLanguage{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordRecognitionLanguage');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordFontAttributes{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordFontAttributes');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordIsFromDictionary{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordIsFromDictionary');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordIsNumeric{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordIsNumeric');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsSuperscript{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsSuperscript');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsSubscript{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsSubscript');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsDropcap{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsDropcap');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorDelete');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorNext');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorGetUTF8Text');
-      GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorConfidence{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorConfidence');
+      // and load it
+      hTesseractLib := LoadLibraryA(PAnsiChar(FULL_LIB_PATH));
+      //hTesseractLib := LoadLibrary({$IFDEF FPC}libtesseract{$ELSE}PChar(libtesseract){$ENDIF});
+      if (hTesseractLib <> 0) then
+      begin
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessVersion{$IFDEF FPC}){$ENDIF}, 'TessVersion');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteText{$IFDEF FPC}){$ENDIF}, 'TessDeleteText');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteTextArray{$IFDEF FPC}){$ENDIF}, 'TessDeleteTextArray');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteIntArray{$IFDEF FPC}){$ENDIF}, 'TessDeleteIntArray');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessTextRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessTextRendererCreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessHOcrRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessHOcrRendererCreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessHOcrRendererCreate2{$IFDEF FPC}){$ENDIF}, 'TessHOcrRendererCreate2');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPDFRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessPDFRendererCreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessUnlvRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessUnlvRendererCreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBoxTextRendererCreate{$IFDEF FPC}){$ENDIF}, 'TessBoxTextRendererCreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessDeleteResultRenderer{$IFDEF FPC}){$ENDIF}, 'TessDeleteResultRenderer');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererInsert{$IFDEF FPC}){$ENDIF}, 'TessResultRendererInsert');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererNext{$IFDEF FPC}){$ENDIF}, 'TessResultRendererNext');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererBeginDocument{$IFDEF FPC}){$ENDIF}, 'TessResultRendererBeginDocument');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererAddImage{$IFDEF FPC}){$ENDIF}, 'TessResultRendererAddImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererEndDocument{$IFDEF FPC}){$ENDIF}, 'TessResultRendererEndDocument');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererExtention{$IFDEF FPC}){$ENDIF}, 'TessResultRendererExtention');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererTitle{$IFDEF FPC}){$ENDIF}, 'TessResultRendererTitle');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultRendererImageNum{$IFDEF FPC}){$ENDIF}, 'TessResultRendererImageNum');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPICreate{$IFDEF FPC}){$ENDIF}, 'TessBaseAPICreate');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIDelete{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIDelete');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetOpenCLDevice{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetOpenCLDevice');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetInputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetInputName');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInputName');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetInputImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetInputImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInputImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInputImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetSourceYResolution{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetSourceYResolution');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetDatapath{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetDatapath');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetOutputName{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetOutputName');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetDebugVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetDebugVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetIntVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetIntVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetBoolVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetBoolVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetDoubleVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetDoubleVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetStringVariable{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetStringVariable');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIPrintVariables{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIPrintVariables');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIPrintVariablesToFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIPrintVariablesToFile');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit1');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit2{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit2');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit3{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit3');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInit4{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInit4');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetInitLanguagesAsString{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetInitLanguagesAsString');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetLoadedLanguagesAsVector{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetLoadedLanguagesAsVector');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetAvailableLanguagesAsVector{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetAvailableLanguagesAsVector');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInitLangMod{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInitLangMod');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIInitForAnalysePage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIInitForAnalysePage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIReadConfigFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIReadConfigFile');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIReadDebugConfigFile{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIReadDebugConfigFile');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetPageSegMode{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetPageSegMode');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetPageSegMode{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetPageSegMode');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRect{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRect');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIClearAdaptiveClassifier{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIClearAdaptiveClassifier');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetImage2{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetImage2');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetSourceResolution{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetSourceResolution');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetRectangle{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetRectangle');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetThresholdedImage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetThresholdedImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetRegions{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetRegions');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextlines{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextlines');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextlines1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextlines1');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetStrips{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetStrips');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetWords{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetWords');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetConnectedComponents{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetConnectedComponents');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetComponentImages{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetComponentImages');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetComponentImages1{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetComponentImages1');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetThresholdedImageScaleFactor{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetThresholdedImageScaleFactor');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAnalyseLayout{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAnalyseLayout');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRecognize{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRecognize');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIRecognizeForChopTest{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIRecognizeForChopTest');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIProcessPages{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIProcessPages');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIProcessPage{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIProcessPage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetIterator{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetIterator');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetMutableIterator{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetMutableIterator');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUTF8Text');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetHOCRText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetHOCRText');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetBoxText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetBoxText');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUNLVText{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUNLVText');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIMeanTextConf{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIMeanTextConf');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAllWordConfidences{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAllWordConfidences');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIAdaptToWordStr{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIAdaptToWordStr');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIClear{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIClear');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIEnd{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIEnd');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIIsValidWord{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIIsValidWord');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetTextDirection{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetTextDirection');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPIGetUnichar{$IFDEF FPC}){$ENDIF}, 'TessBaseAPIGetUnichar');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessBaseAPISetMinOrientationMargin{$IFDEF FPC}){$ENDIF}, 'TessBaseAPISetMinOrientationMargin');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorDelete');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorCopy{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorCopy');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBegin{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBegin');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorNext');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorIsAtBeginningOf{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorIsAtBeginningOf');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorIsAtFinalElement{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorIsAtFinalElement');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBoundingBox{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBoundingBox');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBlockType{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBlockType');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorGetBinaryImage{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorGetBinaryImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorGetImage{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorGetImage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorBaseline{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorBaseline');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorOrientation{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorOrientation');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessPageIteratorParagraphInfo{$IFDEF FPC}){$ENDIF}, 'TessPageIteratorParagraphInfo');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorDelete');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorCopy{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorCopy');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetPageIterator{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetPageIterator');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetPageIteratorConst{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetPageIteratorConst');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetChoiceIterator{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetChoiceIterator');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorNext');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorGetUTF8Text');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorConfidence{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorConfidence');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordRecognitionLanguage{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordRecognitionLanguage');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordFontAttributes{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordFontAttributes');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordIsFromDictionary{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordIsFromDictionary');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorWordIsNumeric{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorWordIsNumeric');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsSuperscript{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsSuperscript');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsSubscript{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsSubscript');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessResultIteratorSymbolIsDropcap{$IFDEF FPC}){$ENDIF}, 'TessResultIteratorSymbolIsDropcap');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorDelete{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorDelete');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorNext{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorNext');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorGetUTF8Text{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorGetUTF8Text');
+        GetTesseractProcAddress({$IFNDEF FPC}@{$ELSE}Pointer({$ENDIF}TessChoiceIteratorConfidence{$IFDEF FPC}){$ENDIF}, 'TessChoiceIteratorConfidence');
 
-      Result := True;
-    end;
+        Result := True;
+      end;
+  end
+    else Result := false;
   end;
 end;
 

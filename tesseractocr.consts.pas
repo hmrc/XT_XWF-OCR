@@ -34,11 +34,14 @@ type
 
 const
   {$IFDEF USE_CPPAN_BINARIES}
-  libleptonica = {$IFDEF Linux}'libpvt.cppan.demo.danbloomberg.leptonica-1.76.0.so'{$ELSE}'pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll'{$ENDIF}; // 'libleptonica-5-x64.dll'{$ENDIF};
-  libtesseract = {$IFDEF Linux}'libpvt.cppan.demo.google.tesseract.libtesseract-master.so'{$ELSE}'pvt.cppan.demo.google.tesseract.libtesseract-master.dll'{$ENDIF}; // libtesseractocr-4-1-x64.dll {$ENDIF};
-  {$ELSE}
-  libleptonica = {$IFDEF Linux}'liblept.so.5'{$ELSE}'liblept-5.dll'{$ENDIF};
-  libtesseract = {$IFDEF Linux}'libtesseract.so.4'{$ELSE}'libtesseract-4.dll'{$ENDIF};
+    {$ifdef CPU64}
+      libleptonica = 'libleptonica-x64-1.76.0.dll'; // pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
+      libtesseract = 'libtesseractocr-x64-4-1.dll'; // pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
+    {$endif}
+    {$ifdef CPU32}
+      libleptonica = 'libleptonica-x86-1.76.0.dll'; // pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
+      libtesseract = 'libtesseractocr-x86-4-1.dll'; // pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
+    {$endif}
   {$ENDIF}
 
 implementation

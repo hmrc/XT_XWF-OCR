@@ -19,11 +19,11 @@ library XT_XWF_OCR;
    Redistributable Package x64 for 64-bit XWF
   (https://aka.ms/vs/16/release/vc_redist.x64.exe) )
 
-  All files must be held in a folder called /bin.
-  XT_XWF_OCR.DLL must be in the root of /bin
-  pvt.cppan.demo.google.tesseract.libtesseract-master.dll must exist in root of /bin
-  pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll must exist in root of /bin
-  eng.traineddata must be in a subfolder of /bin, called /tessdata
+  All files must be held in a folder called \bin.
+  XT_XWF_OCR.DLL must be in the root of \bin
+  libleptonica-x64-1.76.0.dll' must be in the root of \bin
+  libtesseractocr-x64-4-1.dll' must be in the root of \bin
+  eng.traineddata must be in a subfolder of \bin, called \tessdata, i.e. \YourFolder\bin\tessdata
   X-Tension must be executed via the RVS process of XWF (F10)
 
   === Software developers note: ===
@@ -48,15 +48,15 @@ library XT_XWF_OCR;
   PRODUCTION USE STATUS : Proof of Concept Prototype
 
 ### Functionality Overview
-  The X-Tension will examine every picture file. If it is a confirmed picture file
-  larger than 2Kb, it will attempt to conduct OCR and generate a text file
-  containing the output. These can be filtered for recursively post execution
-  using a filename filter "*_OCR-EXTRACT_*
+  The X-Tension will examine every picture file (or tagged picture file).
+  If it is a confirmed picture file larger than 2Kb, it will attempt to
+  conduct OCR and generate a text file containing the output.
+  These can be filtered for recursively post execution using a filename filter "*_OCR-EXTRACT_*
 
   Execution Method : "Refine Volume Snapshot" (RVS, F10)
 
 ### TODOs
-     Make 64-bit ready by creating Leptonica and Tesseract 64-bit DLLs
+     User manual etc
 
 ### Licenses
   This code is open source software licensed under the
@@ -81,7 +81,7 @@ library XT_XWF_OCR;
 ### Collaboration
   Collaboration is welcomed, particularly from Delphi or Freepascal developers.
   This version was created using the Lazarus IDE v2.0.12 and Freepascal v3.2.0.
-  (www.lazarus-ide.org), 32-bit edition
+  (www.lazarus-ide.org), x64 and x86 edition
 
 }
 {$mode Delphi}{$H+}
@@ -447,6 +447,7 @@ begin
                              // Add a report table for the new OCR Item itself
                              lpReportTableString := 'OCR text extracted';
                              RTAdditionSuccess := XWF_AddToReportTable(OCRFileID, @lpReportTableString[0], $04);
+                             slLogFile.Add(IntToStr(OCRFileID) + #9 + strItemFileName + #9 + ' text extracted.');
                            end
                            else
                            begin
@@ -454,9 +455,6 @@ begin
                            end;
                          // Free memory used by the source data buffer
                          Dispose(pSrcBuffer);
-                         // Free memory used by the open item ID.
-                         XWF_Close(hOpenResult);
-
                        end // End of strOCRResult validation check
                      else
                        begin
@@ -485,6 +483,9 @@ begin
                 XWF_OutputMessage(@Buf[0], 0);
                 slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item '+  IntToStr(nItemID) + ') could not be read or examined at all.');
               end;
+
+           // Free memory used by the open item ID.
+           XWF_Close(hOpenResult);
            end // hOpenResult > 0
           else
           begin
@@ -593,14 +594,27 @@ const
  BufLen=1024;
 var
   outputmessage : array[0..Buflen-1] of WideChar;
+  OutputFileName: array[0..Buflen-1] of WideChar;
   Buf : array[0..Buflen-1] of WideChar;
 begin
+  FillChar(Buf, SizeOf(Buf), $00);
+  FillChar(OutputFileName, SizeOf(OutputFileName), $00);
+
   if DirectoryExists(OutputFolder) then
     begin
-      slLogFile.SaveToFile(OutputFolder+'XT_XWF-OCR-'+FormatDateTime('YYYY-MM-DD-HH:MM', Now) + '.txt');
-    end;
+      OutputFileName := 'XT_XWF-OCR-' + FormatDateTime('YYYY-MM-DD-HH-MM-SS', Now) + '.txt';
+      slLogFile.SaveToFile(OutputFolder+OutputFileName);
+    end
+  else
+  begin
+    outputmessage := ('Could not write log file. Output folder does not exist or unwritable ' + OutputFolder);
+    lstrcpyw(Buf, @outputmessage[0]);
+    XWF_OutputMessage(@Buf[0], 0);
+  end;
+
   slLogFile.Free;
-  outputmessage := ('Execution of X-Tension ended at ' + FormatDateTime('YYYY-MM-DD-HH:MM', Now) + '. Find results via FileName filter _OCR-EXTRACT_ or Report Table filter "OCR text extracted"');
+
+  outputmessage := ('Execution of X-Tension ended at ' + FormatDateTime('YYYY-MM-DD-HH:MM:SS', Now) + '. Find results via FileName filter _OCR-EXTRACT_ or Report Table filter "OCR text extracted"');
   lstrcpyw(Buf, @outputmessage[0]);
   XWF_OutputMessage(@Buf[0], 0);
   result := 0;
