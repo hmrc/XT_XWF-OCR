@@ -303,6 +303,7 @@ begin
     }
 end;
 
+// Called for each item in the volume snapshot by XWF.
 // Must return 0! -1 if fails.
 function XT_ProcessItem(nItemID : LongWord; lpReserved : Pointer) : integer; stdcall; export;
 const
@@ -313,6 +314,7 @@ var
   lpFileName          : array[0..Buflen-1] of WideChar;
   Buf                 : array[0..Buflen-1] of WideChar;
   strItemFileName     : array[0..Buflen-1] of WideChar;
+  strOCRItemFileName  : array[0..Buflen-1] of WideChar;
   strItemParentName   : array[0..Buflen-1] of WideChar;
   lpReportTableString : array[0..Buflen-1] of WideChar;
   outputmessage       : array[0..Buflen-1] of WideChar;
@@ -345,14 +347,15 @@ var
 
 begin
   // Make sure buffers are empty and filled with zeroes
-  FillChar(lpTypeDescr,       Length(lpTypeDescr),       #0);
-  FillChar(Buf,               Length(lpTypeDescr),       #0);
-  FillChar(lpFileName,        Length(lpFileName),        #0);
-  FillChar(strItemFileName,   Length(strItemFileName),   #0);
-  FillChar(strItemParentName, Length(strItemParentName), #0);
-  FillChar(InputBytesBuffer,  Length(InputBytesBuffer),  #0);
-  FillChar(lpReportTableString, Length(lpReportTableString), #0);
-  outputmessage := '';
+  FillChar(lpTypeDescr,         Length(lpTypeDescr),        #0);
+  FillChar(Buf,                 Length(lpTypeDescr),        #0);
+  FillChar(lpFileName,          Length(lpFileName),         #0);
+  FillChar(strOCRItemFileName,  Length(strOCRItemFileName), #0);
+  FillChar(strItemFileName,     Length(strItemFileName),    #0);
+  FillChar(strItemParentName,   Length(strItemParentName),  #0);
+  FillChar(InputBytesBuffer,    Length(InputBytesBuffer),   #0);
+  FillChar(lpReportTableString, Length(lpReportTableString),#0);
+  FillChar(outputmessage,       Length(outputmessage),      #0);
 
   itemtypeinfoflag := XWF_GetItemType(nItemID, @lpTypeDescr, Length(lpTypeDescr) or $40000000);
    {0=not verified,
@@ -421,33 +424,31 @@ begin
                      strOCRResult := OCRInstance.RecognizeAsText;
                      if Length(strOCRResult) > 0 then
                        begin
-                         strItemFileName   := XWF_GetItemName(nItemID) + '_OCR-EXTRACT_'+IntToStr(nItemID)+'.txt';
-                         intItemParentID   := XWF_GetItemParent(nItemID);
-
+                         strItemFileName    := XWF_GetItemName(nItemID);
+                         strOCRItemFileName := strItemFileName + '_OCR-EXTRACT.txt';
                          New(pSrcBuffer);
                          pSrcBuffer.nStructSize := SizeOf(TSrcInfo);  // Should return 16 on 32-bit systems
                          pSrcBuffer.nBufSize    := Length(strOCRResult);
                          pSrcBuffer.pBuffer     := @strOCRResult[1];
 
-                         OCRFileID := XWF_CreateFile(@strItemFileName, $00000010, intItemParentID, pSrcBuffer);
+                         OCRFileID := XWF_CreateFile(@strOCRItemFileName, $00000010, nItemID, pSrcBuffer);
                          if OCRFileID > 0 then
                            begin
                              // if parsed text is recovered, assign a child file item, then
                              // mark parent with the "has children" flag (0x02)
-                             // TODO - THIS PARENT\CHILD ASPECT DOESNT SEEM TO WORK ENTIRELY PROPERLY?
-                             XWF_SetItemParent(OCRFileID, intItemParentID);
-                             ParentHasChildren := XWF_SetItemInformation(intItemParentID, XWF_ITEM_INFO_FLAG_HASCHILDREN, $00000002);
+                             XWF_SetItemParent(OCRFileID, nItemID);
+                             ParentHasChildren := XWF_SetItemInformation(nItemID, XWF_ITEM_INFO_FLAG_HASCHILDREN, $00000002);
 
                              // Add Report Table for the current itemID to
                              // highlight that OCR text data available for it
                              // Note this is not a RT for the OCR'd text - for its parent.
-                             lpReportTableString := 'OCR avail via Name Filter "_OCR-EXTRACT_"';
-                             RTAdditionSuccess := XWF_AddToReportTable(intItemParentID, @lpReportTableString[0], $04);
+                             lpReportTableString := 'OCR text extracted to child';
+                             RTAdditionSuccess := XWF_AddToReportTable(nItemID, @lpReportTableString[0], $04);
                              lpReportTableString := '';
-                             // Add a report table for the new OCR Item itself
-                             lpReportTableString := 'OCR text extracted';
+                             // Add a report table for the new OCR Item itself too
+                             lpReportTableString := 'OCR text extracted from parent';
                              RTAdditionSuccess := XWF_AddToReportTable(OCRFileID, @lpReportTableString[0], $04);
-                             slLogFile.Add(IntToStr(OCRFileID) + #9 + strItemFileName + #9 + ' text extracted.');
+                             slLogFile.Add(IntToStr(OCRFileID) + #9 + strOCRItemFileName + #9 + ' text extracted from ' + #9 + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')');
                            end
                            else
                            begin
@@ -460,10 +461,11 @@ begin
                        begin
                          // Free memory used by the open item ID here too, even if read was unsuccessfull
                          XWF_Close(hOpenResult);
-                         outputmessage := 'Unable to extract OCR data from file ' + IntToStr(nItemID);
+                         strItemFileName := XWF_GetItemName(nItemID);
+                         outputmessage := 'Unable to extract OCR data from file ' + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')';
                          lstrcpyw(Buf, @outputmessage[0]);
                          XWF_OutputMessage(@Buf[0], 0);
-                         slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ') was examined but no OCR data could be extracted.');
+                         slLogFile.Add(strItemFileName + ' (Item ' + IntToStr(nItemID) + ') was examined but no OCR data could be extracted.');
                        end;
                    end;
                  Tesseract.Free;
@@ -593,9 +595,9 @@ function XT_Finalize(hVolume, hEvidence : THandle; nOpType : DWord; lpReserved :
 const
  BufLen=1024;
 var
-  outputmessage : array[0..Buflen-1] of WideChar;
-  OutputFileName: array[0..Buflen-1] of WideChar;
-  Buf : array[0..Buflen-1] of WideChar;
+  outputmessage   : array[0..Buflen-1] of WideChar;
+  OutputFileName  : array[0..Buflen-1] of WideChar;
+  Buf             : array[0..Buflen-1] of WideChar;
 begin
   FillChar(Buf, SizeOf(Buf), $00);
   FillChar(OutputFileName, SizeOf(OutputFileName), $00);
@@ -614,7 +616,7 @@ begin
 
   slLogFile.Free;
 
-  outputmessage := ('Execution of X-Tension ended at ' + FormatDateTime('YYYY-MM-DD-HH:MM:SS', Now) + '. Find results via FileName filter _OCR-EXTRACT_ or Report Table filter "OCR text extracted"');
+  outputmessage := ('Execution of X-Tension ended at ' + FormatDateTime('YYYY-MM-DD-HH:MM:SS', Now) + '. Find results via FileName filter "_OCR-EXTRACT" or Report Table filter "OCR text extracted from parent"');
   lstrcpyw(Buf, @outputmessage[0]);
   XWF_OutputMessage(@Buf[0], 0);
   result := 0;

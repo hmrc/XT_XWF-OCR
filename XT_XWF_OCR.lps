@@ -9,8 +9,8 @@
         <Filename Value="XT_XWF_OCR.lpr"/>
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="590"/>
-        <CursorPos X="3" Y="602"/>
+        <TopLine Value="413"/>
+        <CursorPos X="54" Y="306"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -65,7 +65,7 @@
         <EditorIndex Value="4"/>
         <TopLine Value="59"/>
         <CursorPos X="35" Y="83"/>
-        <UsageCount Value="62"/>
+        <UsageCount Value="63"/>
         <Loaded Value="True"/>
       </Unit7>
       <Unit8>
@@ -73,130 +73,130 @@
         <EditorIndex Value="1"/>
         <TopLine Value="135"/>
         <CursorPos X="51" Y="152"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit8>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="501" TopLine="482"/>
+        <Caret Line="502" TopLine="482"/>
       </Position1>
       <Position2>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="502" TopLine="482"/>
+        <Caret Line="503" TopLine="482"/>
       </Position2>
       <Position3>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="503" TopLine="482"/>
+        <Caret Line="504" TopLine="482"/>
       </Position3>
       <Position4>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="504" TopLine="482"/>
+        <Caret Line="505" TopLine="482"/>
       </Position4>
       <Position5>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="505" TopLine="482"/>
+        <Caret Line="506" TopLine="482"/>
       </Position5>
       <Position6>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="506" TopLine="482"/>
+        <Caret Line="507" TopLine="482"/>
       </Position6>
       <Position7>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="507" TopLine="482"/>
+        <Caret Line="508" TopLine="482"/>
       </Position7>
       <Position8>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="508" TopLine="482"/>
+        <Caret Line="509" TopLine="482"/>
       </Position8>
       <Position9>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="509" TopLine="482"/>
+        <Caret Line="510" TopLine="483"/>
       </Position9>
       <Position10>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="510" TopLine="483"/>
+        <Caret Line="620" TopLine="596"/>
       </Position10>
       <Position11>
-        <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="620" TopLine="596"/>
-      </Position11>
-      <Position12>
         <Filename Value="XT_XWF_OCR.lpr"/>
         <Caret Line="630" TopLine="600"/>
+      </Position11>
+      <Position12>
+        <Filename Value="tesseractocr.leptonica.pas"/>
+        <Caret Line="152" TopLine="135"/>
       </Position12>
       <Position13>
-        <Filename Value="tesseractocr.leptonica.pas"/>
-        <Caret Line="152" TopLine="135"/>
-      </Position13>
-      <Position14>
         <Filename Value="tesseractocr.capi.pas"/>
         <Caret Line="489" TopLine="473"/>
-      </Position14>
-      <Position15>
+      </Position13>
+      <Position14>
         <Filename Value="tesseractocr.leptonica.pas"/>
         <Caret Line="152" TopLine="135"/>
+      </Position14>
+      <Position15>
+        <Filename Value="tesseractocr.capi.pas"/>
+        <Caret Line="494" TopLine="473"/>
       </Position15>
       <Position16>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="494" TopLine="473"/>
+        <Caret Line="496" TopLine="473"/>
       </Position16>
       <Position17>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="496" TopLine="473"/>
+        <Caret Line="497" TopLine="473"/>
       </Position17>
       <Position18>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="497" TopLine="473"/>
+        <Caret Line="498" TopLine="473"/>
       </Position18>
       <Position19>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="498" TopLine="473"/>
+        <Caret Line="499" TopLine="473"/>
       </Position19>
       <Position20>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="499" TopLine="473"/>
+        <Caret Line="620" TopLine="596"/>
       </Position20>
       <Position21>
         <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="620" TopLine="596"/>
+        <Caret Line="483" Column="43" TopLine="467"/>
       </Position21>
       <Position22>
-        <Filename Value="tesseractocr.capi.pas"/>
-        <Caret Line="483" Column="43" TopLine="467"/>
-      </Position22>
-      <Position23>
         <Filename Value="XT_XWF_OCR.lpr"/>
         <Caret Line="25" Column="51" TopLine="8"/>
-      </Position23>
-      <Position24>
+      </Position22>
+      <Position23>
         <Filename Value="tesseractocr.leptonica.pas"/>
         <Caret Line="152" Column="51" TopLine="135"/>
-      </Position24>
-      <Position25>
+      </Position23>
+      <Position24>
         <Filename Value="XT_XWF_OCR.lpr"/>
         <Caret Line="599" TopLine="585"/>
+      </Position24>
+      <Position25>
+        <Filename Value="XT_API.pas"/>
+        <Caret Line="159" TopLine="136"/>
       </Position25>
       <Position26>
         <Filename Value="XT_API.pas"/>
-        <Caret Line="159" TopLine="136"/>
+        <Caret Line="81" Column="17" TopLine="58"/>
       </Position26>
       <Position27>
-        <Filename Value="XT_API.pas"/>
-        <Caret Line="81" Column="17" TopLine="58"/>
+        <Filename Value="XT_XWF_OCR.lpr"/>
+        <Caret Line="606" Column="39" TopLine="585"/>
       </Position27>
       <Position28>
         <Filename Value="XT_XWF_OCR.lpr"/>
-        <Caret Line="606" Column="39" TopLine="585"/>
+        <Caret Line="599" TopLine="585"/>
       </Position28>
       <Position29>
         <Filename Value="XT_XWF_OCR.lpr"/>
-        <Caret Line="599" TopLine="585"/>
+        <Caret Line="602" Column="17" TopLine="585"/>
       </Position29>
       <Position30>
         <Filename Value="XT_XWF_OCR.lpr"/>
-        <Caret Line="602" Column="17" TopLine="585"/>
+        <Caret Line="450" Column="153" TopLine="427"/>
       </Position30>
     </JumpHistory>
     <RunParams>
