@@ -34,13 +34,26 @@ type
 
 const
   {$IFDEF USE_CPPAN_BINARIES}
-    {$ifdef CPU64}
-      libleptonica = 'libleptonica-x64-1.76.0.dll'; // pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
-      libtesseract = 'libtesseractocr-x64-4-1.dll'; // pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
+  // Original library declaration as stated in the TTesseractOCR4 library
+  // https://github.com/r1me/TTesseractOCR4
+   { {$ifdef CPU64}
+      libleptonica = pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
+      libtesseract = pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
     {$endif}
     {$ifdef CPU32}
-      libleptonica = 'libleptonica-x86-1.76.0.dll'; // pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
-      libtesseract = 'libtesseractocr-x86-4-1.dll'; // pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
+      libleptonica = pvt.cppan.demo.danbloomberg.leptonica-1.76.0.dll;
+      libtesseract = pvt.cppan.demo.google.tesseract.libtesseract-master.dll;
+    {$endif}   }
+
+  // Modified declaration to utilise the more convenient self-encompassed C libTesseract library
+  // https://github.com/ollydev/libTesseract
+  {$ifdef CPU64}
+      libtesseract = 'libtesseract64.dll';
+      libleptonica = libtesseract;         // Point up to x64 libtesseract as libTesseract DLL contains both function calls
+    {$endif}
+    {$ifdef CPU32}
+      libtesseract = 'libtesseract32.dll';
+      libleptonica = libtesseract;         // Point up to x86 libtesseract as libTesseract DLL contains both function calls
     {$endif}
   {$ENDIF}
 

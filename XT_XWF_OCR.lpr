@@ -1,36 +1,52 @@
 library XT_XWF_OCR;
 {
 
-# XT_XWF-OCR v0.1 Alpha
+# XT_XWF-OCR v0.2 Alpha
 
 ### XT_XWF-OCR X-Tension by Ted Smith
    Most recently tested on XWF : v20.0
 
+### Functionality Overview
+  The X-Tension will examine every picture file (or tagged picture file).
+  If it is a confirmed picture file larger than 2Kb, it will attempt to
+  conduct OCR and generate a text file containing the output.
+  These can be filtered for recursively post execution using a filename filter "*_OCR-EXTRACT.txt"
+  For better results, tag picture files that look OCR'able first, and then run
+  RVS over tagged items only. If you run this over EVERY picture file you
+  WILL waste time....a lot of it.
+
+  NOT MULTI-THREAD ENABLED. If you use more threads, it will appear to hang.
+
 ### Requirements
-  This X-Tension is designed for use only with X-Ways Forensics, x86 edition
-  This X-Tension is designed for use only with v19.1 of X-Ways Forensics or later.
+  This X-Tension is designed for use only with X-Ways Forensics v19.1 or higher
   This X-Tension is not designed for use on Linux or OSX platforms.
 
   === All users Note ====
 
-  Host OS requires Microsoft C++ 2017 Redistributable Package x86 for 32-bit XWF
-  https://aka.ms/vs/16/release/vc_redist.x86.exe
-  (When x64 version is ready, host OS will requires Microsoft C++ 2017
-   Redistributable Package x64 for 64-bit XWF
-  (https://aka.ms/vs/16/release/vc_redist.x64.exe) )
+  Host OS requires Microsoft C++ 2017 Redistributable Package
+  https://aka.ms/vs/16/release/vc_redist.x86.exe - 32-bit
+  https://aka.ms/vs/16/release/vc_redist.x64.exe - 64-bit
 
   All files must be held in a folder called \bin.
-  XT_XWF_OCR.DLL must be in the root of \bin
-  libleptonica-x64-1.76.0.dll' must be in the root of \bin
-  libtesseractocr-x64-4-1.dll' must be in the root of \bin
-  eng.traineddata must be in a subfolder of \bin, called \tessdata, i.e. \YourFolder\bin\tessdata
+    1) XT_XWF_OCR.DLL must be in the root of \bin
+    2) libtesseract32.dll must be in the root of \bin
+    3) libtesseract64.dll must be in the root of \bin
+    4) "eng.traineddata" must be in a subfolder of \bin, called "\tessdata", i.e. \YourFolder\bin\tessdata
   X-Tension must be executed via the RVS process of XWF (F10)
 
   === Software developers note: ===
   LCLBase Package is required for project compilation
 
-  msys2 (https://www.msys2.org/) is required to compile 64-bit DLL's of
-  Leptonica 1.80.0 (7/28/20) and TesseractOCR
+  msys2 (https://www.msys2.org/) is required to compile DLL's of
+  Leptonica and TesseractOCR.
+
+  However, as of 08/07/21, a single DLL for both x64 and x86 is bundled providing
+  Tesseract v4.1.1 capability, supplying both the Tesseract and Leptonica
+  functionality combined without the need for about a dozen other DLLs.
+  This is with great thanks to the libTesseract project :
+  https://github.com/ollydev/libTesseract
+
+  But others wishing to pursue the route manually can do so via :
 
   Leptonica
   https://packages.msys2.org/package/mingw-w64-x86_64-leptonica?repo=mingw64
@@ -47,14 +63,6 @@ library XT_XWF_OCR;
 ### Usage Disclaimer
   PRODUCTION USE STATUS : Proof of Concept Prototype
 
-### Functionality Overview
-  The X-Tension will examine every picture file (or tagged picture file).
-  If it is a confirmed picture file larger than 2Kb, it will attempt to
-  conduct OCR and generate a text file containing the output.
-  These can be filtered for recursively post execution using a filename filter "*_OCR-EXTRACT_*
-
-  Execution Method : "Refine Volume Snapshot" (RVS, F10)
-
 ### TODOs
      User manual etc
 
@@ -65,15 +73,18 @@ library XT_XWF_OCR;
   (http://www.nationalarchives.gov.uk/doc/open-government-licence and
    http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
-  Tesseract is an open source text recognition (OCR) Engine from Google,
-  available under the Apache 2.0 license
+  Tesseract, which this code relies upon, is an open source text recognition (OCR)
+  Engine from Google, available under the Apache 2.0 license
   http://www.apache.org/licenses/LICENSE-2.0
 
-  TTesseractOCR4 is an Object Orientated Pascal binding for Tesseract-ocr 4,
+  TTesseractOCR4, which this code relies upon, is an Object Orientated Pascal binding for Tesseract-ocr 4,
   an optical character recognition engine licensed under MIT
   https://github.com/r1me/TTesseractOCR4
 
-  Leptonica is licensed by Dan Bloomberg under a
+  libTesseract, which this code relies upon, is courtesy of
+  https://github.com/ollydev/libTesseract (no license stated as of 08/07/21)
+
+  Leptonica, which this code relies upon, is licensed by Dan Bloomberg under a
   Creative Commons Attribution 3.0 United States License.
   https://github.com/DanBloomberg/leptonica
 
@@ -162,11 +173,12 @@ var
   UserInputResultVal : Int64 = Default(Int64);
   OutputOK           : Boolean = Default(Boolean);
 begin
-  result              := Default(widestring);
-  outputmessage := '';
-  FillChar(outputmessage, Length(outputmessage), $00);
+  result             := Default(widestring);
+  outputmessage      := '';
+
+  FillChar(outputmessage,      Length(outputmessage),      $00);
   FillChar(UsersSpecifiedPath, Length(UsersSpecifiedPath), $00);
-  FillChar(Buf, Length(Buf), $00);
+  FillChar(Buf,                Length(Buf),                $00);
 
   // Set default output location
   UsersSpecifiedPath := 'C:\temp\';
@@ -243,7 +255,6 @@ var
   outputmessage : array[0..Buflen-1] of WideChar;
   Buf           : array[0..Buflen-1] of WideChar;
 begin
-
   if nOpType <> 1 then
   begin
     MessageBox(MainWnd, 'Advisory: ' +
@@ -261,7 +272,7 @@ begin
         if DirectoryExists(OutputFolder) then
         begin
           OutputFolderIsSpecified := true;
-          result := XT_PREPARE_CALLPI;  // Tell XWF to proceed and call XT_ProcessItem
+          result := XT_PREPARE_CALLPI;      // Set Result. Tell XWF to proceed and call XT_ProcessItem
           CurrentVolume := hVolume;
           slLogFile := TStringList.Create;
           outputmessage := 'Execution of X-Tension started at ' + FormatDateTime('YYYY-MM-DD-HH:MM', Now);
@@ -282,7 +293,7 @@ begin
         // We need our X-Tension to return 0x01, 0x08, 0x10, and 0x20, depending on exactly what we want
         // We can change the result using or combinations as we need, as follows:
         // Call XT_ProcessItem for each item in the evidence object : (0x01)  : XT_PREPARE_CALLPI
-        result := XT_PREPARE_CALLPI;  // Tell XWF to proceed and call XT_ProcessItem
+        result := XT_PREPARE_CALLPI;  // Set Result. Tell XWF to proceed and call XT_ProcessItem
         CurrentVolume := hVolume;
         outputmessage := 'Execution of X-Tension started at ' + FormatDateTime('YYYY-MM-DD-HH:MM', Now);
         lstrcpyw(Buf, @outputmessage[0]);
@@ -319,22 +330,22 @@ var
   lpReportTableString : array[0..Buflen-1] of WideChar;
   outputmessage       : array[0..Buflen-1] of WideChar;
   itemtypeinfoflag    : Integer = Default(integer);
-  intItemParentID     : Integer = Default(integer);
   OCRFileID           : Integer = Default(integer);
+  ParentHasChildren   : Boolean = Default(Boolean);
   IsAValidPictureFile : Boolean = Default(Boolean);
   PicReadyForOCR      : Boolean = Default(Boolean);
   ItemInfoSetOK       : Boolean = Default(Boolean);
-  ParentHasChildren   : Boolean = Default(Boolean);
-  hItem               : THandle;
-  hOpenResult         : THandle;
+  hOpenResult         : THandle = Default(THandle);
   OCRInstance         : TTesseractOCR4;
   strOCRResult        : string = Default(string);
   pSrcBuffer          : PSrcInfo;
 
   // For RasterImage version only
-  // numBytesPerLine: Integer = Default(integer);
-  // ForOCR_RII     : PRasterImageInfo;
-  // pPicBuff       : Pointer;
+  // numBytesPerLine   : Integer = Default(integer);
+  // ForOCR_RII        : PRasterImageInfo;
+  // pPicBuff          : Pointer;
+  // intItemParentID   : Integer = Default(integer);
+  //
 
   // For the filestreamed method only
   InputBytesBuffer  : TBytes;
@@ -347,15 +358,15 @@ var
 
 begin
   // Make sure buffers are empty and filled with zeroes
-  FillChar(lpTypeDescr,         Length(lpTypeDescr),        #0);
-  FillChar(Buf,                 Length(lpTypeDescr),        #0);
-  FillChar(lpFileName,          Length(lpFileName),         #0);
-  FillChar(strOCRItemFileName,  Length(strOCRItemFileName), #0);
-  FillChar(strItemFileName,     Length(strItemFileName),    #0);
-  FillChar(strItemParentName,   Length(strItemParentName),  #0);
-  FillChar(InputBytesBuffer,    Length(InputBytesBuffer),   #0);
-  FillChar(lpReportTableString, Length(lpReportTableString),#0);
-  FillChar(outputmessage,       Length(outputmessage),      #0);
+  FillChar(lpTypeDescr,         Length(lpTypeDescr),        $00);
+  FillChar(Buf,                 Length(lpTypeDescr),        $00);
+  FillChar(lpFileName,          Length(lpFileName),         $00);
+  FillChar(strOCRItemFileName,  Length(strOCRItemFileName), $00);
+  FillChar(strItemFileName,     Length(strItemFileName),    $00);
+  FillChar(strItemParentName,   Length(strItemParentName),  $00);
+  FillChar(InputBytesBuffer,    Length(InputBytesBuffer),   $00);
+  FillChar(lpReportTableString, Length(lpReportTableString),$00);
+  FillChar(outputmessage,       Length(outputmessage),      $00);
 
   itemtypeinfoflag := XWF_GetItemType(nItemID, @lpTypeDescr, Length(lpTypeDescr) or $40000000);
    {0=not verified,
@@ -381,7 +392,8 @@ begin
         begin
           // For now, we will load pictures into RAM then write to disk
           // but need to incorporate a filestream method from XWF to disk, ideally
-          // to account for big files
+          // to account for big files. But as its 2021, I can't imagine many
+          // pic files being too big for the RAM of most digital forensics machines
           SetLength(InputBytesBuffer, ItemSize);
 
           // Read the native file item into InputBytesBuffer buffer
@@ -414,7 +426,7 @@ begin
               finally
                 // nothing needed
               end;
-
+              // Now read the file from disk, and begin OCR work
               if BytesWritten > 0 then
                begin
                  Tesseract := OCRInstance; // Still dont understand why this is necessary, but it is
