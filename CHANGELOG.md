@@ -1,3 +1,9 @@
+v0.3 Alpha<br>
+XWF_Close was being called in areas of the loop where the failure of XWF_OpenItem made it impossible to close anyway, which caused Unable to free memory" errors. That was fixed. <br>
+Log file reports failed file items using the same structure as successful items, i.e. ID, name, message<br>
+Both the log file and the temporary files are now saved to the same specified output location defined by the user (C:\temp by default), as opposed to the temp files going to the root of where the DLL is being executed from.<br>
+If the user forgets to add a backslash to the output location folder name, it will now be added automatically.  <br>
+
 v0.2 Alphas Release<br>
 64-bit and 32-bit version available
 Tesseract and Leptonica now held in one single DLL<br>

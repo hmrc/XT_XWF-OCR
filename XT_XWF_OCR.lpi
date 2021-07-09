@@ -61,11 +61,10 @@
     </SearchPaths>
     <CodeGeneration>
       <RelocatableUnit Value="True"/>
-      <TargetCPU Value="i386"/>
-      <TargetOS Value="win32"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
+        <GenerateDebugInfo Value="False"/>
         <DebugInfoType Value="dsDwarf2Set"/>
       </Debugging>
       <Options>

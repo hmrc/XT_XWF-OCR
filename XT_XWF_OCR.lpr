@@ -190,7 +190,7 @@ begin
     // If output location exists, use it, otherwise, create it
     if DirectoryExists(UsersSpecifiedPath) then
     begin
-      result            := UTF8ToUTF16(UsersSpecifiedPath);
+      result            := UTF8ToUTF16(IncludeTrailingPathDelimiter(UsersSpecifiedPath));
       outputmessage     := 'Log file will be saved to existing folder : ' + UsersSpecifiedPath;
       lstrcpyw(Buf, outputmessage);
       XWF_OutputMessage(@Buf[0], 0);
@@ -200,7 +200,7 @@ begin
       OutputOK := ForceDirectories(UsersSpecifiedPath);
       if OutputOK then
       begin
-        result            := UTF8ToUTF16(UsersSpecifiedPath);
+        result            := UTF8ToUTF16(IncludeTrailingPathDelimiter(UsersSpecifiedPath));
         outputmessage     := 'Log file will be saved to new folder : ' + UsersSpecifiedPath;
         lstrcpyw(Buf, outputmessage);
         XWF_OutputMessage(@Buf[0], 0);
@@ -410,12 +410,12 @@ begin
               try
                 if Length(scratchfilename) > 0 then
                 begin
-                  OutputStream := TFileStream.Create(scratchfilename, fmCreate);
+                  OutputStream := TFileStream.Create(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename, fmCreate);
                 end
                 else
                 begin
                   scratchfilename := 'tempfile.raw';
-                  OutputStream := TFileStream.Create(scratchfilename, fmCreate);
+                  OutputStream := TFileStream.Create(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename, fmCreate);
                 end;
                 if OutPutStream.Handle > 0 then
                 begin
@@ -426,11 +426,11 @@ begin
               finally
                 // nothing needed
               end;
-              // Now read the file from disk, and begin OCR work
+              // Now read the temp copy of the file from disk, and begin OCR work
               if BytesWritten > 0 then
                begin
                  Tesseract := OCRInstance; // Still dont understand why this is necessary, but it is
-                 PicReadyForOCR := OCRInstance.SetImage(scratchfilename);
+                 PicReadyForOCR := OCRInstance.SetImage(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename);
                  if PicReadyForOCR then
                    begin
                      strOCRResult := OCRInstance.RecognizeAsText;
@@ -477,7 +477,7 @@ begin
                          outputmessage := 'Unable to extract OCR data from file ' + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')';
                          lstrcpyw(Buf, @outputmessage[0]);
                          XWF_OutputMessage(@Buf[0], 0);
-                         slLogFile.Add(strItemFileName + ' (Item ' + IntToStr(nItemID) + ') was examined but no OCR data could be extracted.');
+                         slLogFile.Add(IntToStr(nItemID) + #9 + strItemFileName + #9 + ' was examined but no OCR data could be extracted.');
                        end;
                    end;
                  Tesseract.Free;
@@ -487,30 +487,30 @@ begin
                   outputmessage := 'Unable to write temp file for OCR recognition for file: ' + IntToStr(nItemID);
                   lstrcpyw(Buf, @outputmessage[0]);
                   XWF_OutputMessage(@Buf[0], 0);
-                  slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ') could not be copied and written out from XWF for OCR analysis.');
+                  slLogFile.Add(XWF_GetItemName(nItemID) + #9 + IntToStr(nItemID) + #9 + ' could not be copied and written out from XWF for OCR analysis.');
                 end;
              end // intBytesRead > 0
             else
               begin
+                // No need for XWF_Close(hOpenResult) because the item was not opened anyway
                 outputmessage := 'Unable to read ' + IntToStr(nItemID);
                 lstrcpyw(Buf, @outputmessage[0]);
                 XWF_OutputMessage(@Buf[0], 0);
-                slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item '+  IntToStr(nItemID) + ') could not be read or examined at all.');
+                slLogFile.Add(XWF_GetItemName(nItemID) + #9 + IntToStr(nItemID) + #9 + ' could not be read or examined at all.');
               end;
-
-           // Free memory used by the open item ID.
-           XWF_Close(hOpenResult);
            end // hOpenResult > 0
           else
           begin
+            // No need for XWF_Close(hOpenResult) at this point because the item was not opened anyway
             outputmessage := 'Unable to open ' + IntToStr(nItemID);
             lstrcpyw(Buf, @outputmessage[0]);
             XWF_OutputMessage(@Buf[0], 0);
-            slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ') could not be opened and thus could not be examined for OCR.');
+            slLogFile.Add(XWF_GetItemName(nItemID) + #9 + IntToStr(nItemID) + #9 + ' could not be opened and thus could not be examined for OCR.');
           end;
          end // OCRInstance.Initialize
         else
           begin
+            // No need for XWF_Close(hOpenResult) at this point because the item was not opened anyway
             outputmessage := 'Unable to start OCR engine for file ' + IntToStr(nItemID);
             lstrcpyw(Buf, @outputmessage[0]);
             XWF_OutputMessage(@Buf[0], 0);
@@ -520,7 +520,7 @@ begin
         // End of OCRInstance creation try finally statement. Cleanup.
         if Length(scratchfilename) > 0 then
         begin
-          DelFileOK := DeleteFile(scratchfilename);
+          DelFileOK := DeleteFile(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename);
         end;
       end;
     end
