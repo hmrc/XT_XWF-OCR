@@ -1,4 +1,4 @@
-# XT_XWF-OCR v0.2 Alpha
+# XT_XWF-OCR 
 
 ### XT_XWF-OCR X-Tension by Ted Smith
    Most recently tested on XWF : v20.0<br>
