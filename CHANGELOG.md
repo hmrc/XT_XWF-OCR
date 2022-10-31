@@ -1,3 +1,9 @@
+v0.4 Alpha<br>
+The Tesseract lib is now only loaded once, instead of being loaded and unloaded for every item, making it faster
+Rather than creating a temporary copy of the file on disk to OCR, its now done in a TPicture memory stream, making it faster
+Added Interfaces library to enable the above. 
+Added seconds to the "started at" value instead of just date, hours and minutes. 
+
 v0.3 Alpha<br>
 XWF_Close was being called in areas of the loop where the failure of XWF_OpenItem made it impossible to close anyway, which caused Unable to free memory" errors. That was fixed. <br>
 Log file reports failed file items using the same structure as successful items, i.e. ID, name, message<br>

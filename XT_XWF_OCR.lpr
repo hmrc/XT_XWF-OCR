@@ -1,7 +1,7 @@
 library XT_XWF_OCR;
 {
 
-# XT_XWF-OCR 
+# XT_XWF-OCR
 
 ### XT_XWF-OCR X-Tension by Ted Smith
    Most recently tested on XWF : v20.0
@@ -99,7 +99,7 @@ library XT_XWF_OCR;
 
 uses
   Classes, XT_API, windows, sysutils, contnrs, md5, LazUTF8, lazutf8classes,
-  tesseractocr;
+  tesseractocr, Interfaces, LCLIntf, Graphics;
 
   const
     BufEvdNameLen=256;
@@ -107,6 +107,9 @@ var
   // These are global vars
   MainWnd                  : THandle;
   CurrentVolume            : THandle;
+  // Tesseract variables so we only have a single instance
+  OCRInstance              : TTesseractOCR4;
+  TesseractInit            : boolean = False;
   // For a log file to save details of any failures
   slLogFile                : TStringList;
   // Evidence name is global for later filesave by name
@@ -266,38 +269,53 @@ begin
   end
   else
     begin
-      if OutputFolderIsSpecified = false then
+      // Set up OCRInstance in prepare, so we can use same instance rather than recreate each time
+      OCRInstance := TTesseractOCR4.Create;
+      // Only carry on setup if OCRInstance is safely initalised
+      if OCRInstance.Initialize('tessdata' + PathDelim, 'eng') then
       begin
-        OutputFolder := GetOutputLocation();
-        if DirectoryExists(OutputFolder) then
+        TesseractInit := true;
+        Tesseract := OCRInstance; // Still dont understand why this is necessary, but it is
+        if OutputFolderIsSpecified = false then
         begin
-          OutputFolderIsSpecified := true;
-          result := XT_PREPARE_CALLPI;      // Set Result. Tell XWF to proceed and call XT_ProcessItem
+          OutputFolder := GetOutputLocation();
+          if DirectoryExists(OutputFolder) then
+          begin
+            OutputFolderIsSpecified := true;
+            result := XT_PREPARE_CALLPI;      // Set Result. Tell XWF to proceed and call XT_ProcessItem
+            CurrentVolume := hVolume;
+            slLogFile := TStringList.Create;
+            outputmessage := 'Execution of X-Tension started at ' + FormatDateTime('YYYY-MM-DD-HH:MM:SS', Now);
+            lstrcpyw(Buf, @outputmessage[0]);
+            XWF_OutputMessage(@Buf[0], 0);
+          end
+          else
+          begin
+            outputmessage := 'Could not create output folder for log file. Stopping';
+            lstrcpyw(Buf, outputmessage);
+            XWF_OutputMessage(@Buf[0], 0);
+            OutputFolderIsSpecified := false;
+            result := -3  // Tell XWF to abort
+          end;
+        end
+        else if OutputFolderIsSpecified = true then
+        begin
+          // We need our X-Tension to return 0x01, 0x08, 0x10, and 0x20, depending on exactly what we want
+          // We can change the result using or combinations as we need, as follows:
+          // Call XT_ProcessItem for each item in the evidence object : (0x01)  : XT_PREPARE_CALLPI
+          result := XT_PREPARE_CALLPI;  // Set Result. Tell XWF to proceed and call XT_ProcessItem
           CurrentVolume := hVolume;
-          slLogFile := TStringList.Create;
           outputmessage := 'Execution of X-Tension started at ' + FormatDateTime('YYYY-MM-DD-HH:MM', Now);
           lstrcpyw(Buf, @outputmessage[0]);
           XWF_OutputMessage(@Buf[0], 0);
-        end
-        else
-        begin
-          outputmessage := 'Could not create output folder for log file. Stopping';
-          lstrcpyw(Buf, outputmessage);
-          XWF_OutputMessage(@Buf[0], 0);
-          OutputFolderIsSpecified := false;
-          result := -3  // Tell XWF to abort
         end;
-       end
-      else if OutputFolderIsSpecified = true then
+      end
+      else
       begin
-        // We need our X-Tension to return 0x01, 0x08, 0x10, and 0x20, depending on exactly what we want
-        // We can change the result using or combinations as we need, as follows:
-        // Call XT_ProcessItem for each item in the evidence object : (0x01)  : XT_PREPARE_CALLPI
-        result := XT_PREPARE_CALLPI;  // Set Result. Tell XWF to proceed and call XT_ProcessItem
-        CurrentVolume := hVolume;
-        outputmessage := 'Execution of X-Tension started at ' + FormatDateTime('YYYY-MM-DD-HH:MM', Now);
-        lstrcpyw(Buf, @outputmessage[0]);
+        outputmessage := 'Could not initialise Tesseract to actually conduct OCR. Stopping';
+        lstrcpyw(Buf, outputmessage);
         XWF_OutputMessage(@Buf[0], 0);
+        result := -3;
       end;
     end;
 
@@ -336,25 +354,22 @@ var
   PicReadyForOCR      : Boolean = Default(Boolean);
   ItemInfoSetOK       : Boolean = Default(Boolean);
   hOpenResult         : THandle = Default(THandle);
-  OCRInstance         : TTesseractOCR4;
   strOCRResult        : string = Default(string);
   pSrcBuffer          : PSrcInfo;
 
-  // For RasterImage version only
+  // For RasterImage version only. See solution 2 below - the Golden Goose solution
   // numBytesPerLine   : Integer = Default(integer);
   // ForOCR_RII        : PRasterImageInfo;
   // pPicBuff          : Pointer;
   // intItemParentID   : Integer = Default(integer);
-  //
 
   // For the filestreamed method only
   InputBytesBuffer  : TBytes;
   intBytesRead      : Int64 = Default(Int64);
-  BytesWritten      : Int64 = Default(Int64);
   RTAdditionSuccess : Integer = Default(Integer);
-  OutputStream      : TFileStream;
-  DelFileOK         : Boolean = Default(Boolean);
-  scratchfilename   : string = Default(string);
+  // https://lazarus-ccr.sourceforge.io/docs/lcl/graphics/tpicture.html
+  PicFile           : TPicture;
+  PicStream         : TBytesStream;
 
 begin
   // Make sure buffers are empty and filled with zeroes
@@ -382,18 +397,19 @@ begin
   begin
     // Get the size of the item
     ItemSize := XWF_GetItemSize(nItemID);
+
     // If its a picture, and greater than 2K bytes, and potentially a valid file, then attempt to OCR it
     if (lpTypeDescr = 'Pictures') and (ItemSize > 2000) and (itemtypeinfoflag > 2) then
     begin
       IsAValidPictureFile := true;
       try
-        OCRInstance := TTesseractOCR4.Create;
-        if OCRInstance.Initialize('tessdata' + PathDelim, 'eng') then
+        // should never reach this if the init doesn't work in Prepare because it would return -3
+        // and not continue the X-Tension
+        if TesseractInit then
         begin
-          // For now, we will load pictures into RAM then write to disk
-          // but need to incorporate a filestream method from XWF to disk, ideally
-          // to account for big files. But as its 2021, I can't imagine many
-          // pic files being too big for the RAM of most digital forensics machines
+          // For now, we will load pictures into RAM to be OCR'd
+          // As its 2022, I can't imagine many picture files being too big for
+          // the RAM of most digital forensics machines
           SetLength(InputBytesBuffer, ItemSize);
 
           // Read the native file item into InputBytesBuffer buffer
@@ -403,93 +419,66 @@ begin
             intBytesRead := XWF_Read(hOpenResult, 0, @InputBytesBuffer[0], ItemSize);
             if intBytesRead > 0 then
             begin
-              // Write the native file out to disk using the above declared stream
-              // Use a GUID as a temp filename, or 'tempfile.raw' if that fails,
-              // then write content of InputBytesBuffer to it
-              scratchfilename := TGUID.NewGuid.ToString(true);
+              // Write the native file declared stream
+              PicStream := TBytesStream.Create(InputBytesBuffer);
+              PicFile := TPicture.Create;
               try
-                if Length(scratchfilename) > 0 then
+                PicFile.LoadFromStream(PicStream);
+                PicReadyForOCR := OCRInstance.SetImage(PicFile.Bitmap);
+                if PicReadyForOCR then
                 begin
-                  OutputStream := TFileStream.Create(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename, fmCreate);
-                end
-                else
-                begin
-                  scratchfilename := 'tempfile.raw';
-                  OutputStream := TFileStream.Create(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename, fmCreate);
-                end;
-                if OutPutStream.Handle > 0 then
-                begin
-                  BytesWritten := -1;
-                  BytesWritten := OutputStream.Write(InputBytesBuffer[0], intBytesRead);
-                  OutputStream.Free;
+                 strOCRResult := OCRInstance.RecognizeAsText;
+                 if Length(strOCRResult) > 0 then
+                   begin
+                     strItemFileName    := XWF_GetItemName(nItemID);
+                     strOCRItemFileName := strItemFileName + '_OCR-EXTRACT.txt';
+                     New(pSrcBuffer);
+                     pSrcBuffer.nStructSize := SizeOf(TSrcInfo);  // Should return 16 on 32-bit systems, 20 on 64-bit
+                     pSrcBuffer.nBufSize    := Length(strOCRResult);
+                     pSrcBuffer.pBuffer     := @strOCRResult[1];
+
+                     OCRFileID := XWF_CreateFile(@strOCRItemFileName, $00000010, nItemID, pSrcBuffer);
+                     if OCRFileID > 0 then
+                       begin
+                         // if parsed text is recovered, assign a child file item, then
+                         // mark parent with the "has children" flag (0x02)
+                         XWF_SetItemParent(OCRFileID, nItemID);
+                         ParentHasChildren := XWF_SetItemInformation(nItemID, XWF_ITEM_INFO_FLAG_HASCHILDREN, $00000002);
+
+                         // Add Report Table for the current itemID to
+                         // highlight that OCR text data available for it
+                         // Note this is not a RT for the OCR'd text - for its parent.
+                         lpReportTableString := 'OCR text extracted to child';
+                         RTAdditionSuccess := XWF_AddToReportTable(nItemID, @lpReportTableString[0], $04);
+                         lpReportTableString := '';
+                         // Add a report table for the new OCR Item itself too
+                         lpReportTableString := 'OCR text extracted from parent';
+                         RTAdditionSuccess := XWF_AddToReportTable(OCRFileID, @lpReportTableString[0], $04);
+                         slLogFile.Add(IntToStr(OCRFileID) + #9 + strOCRItemFileName + #9 + ' text extracted from ' + #9 + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')');
+                       end
+                       else
+                       begin
+                         slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ') was examined but a new OCR item could not be added to the case');
+                       end;
+                     // Free memory used by the source data buffer
+                     Dispose(pSrcBuffer);
+                   end // End of strOCRResult validation check
+                 else
+                   begin
+                     // Free memory used by the open item ID here too, even if read was unsuccessfull
+                     XWF_Close(hOpenResult);
+                     strItemFileName := XWF_GetItemName(nItemID);
+                     outputmessage := 'Unable to extract OCR data from file ' + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')';
+                     lstrcpyw(Buf, @outputmessage[0]);
+                     XWF_OutputMessage(@Buf[0], 0);
+                     slLogFile.Add(IntToStr(nItemID) + #9 + strItemFileName + #9 + ' was examined but no OCR data could be extracted.');
+                   end;
                 end;
               finally
-                // nothing needed
+                PicFile.Free;
               end;
-              // Now read the temp copy of the file from disk, and begin OCR work
-              if BytesWritten > 0 then
-               begin
-                 Tesseract := OCRInstance; // Still dont understand why this is necessary, but it is
-                 PicReadyForOCR := OCRInstance.SetImage(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename);
-                 if PicReadyForOCR then
-                   begin
-                     strOCRResult := OCRInstance.RecognizeAsText;
-                     if Length(strOCRResult) > 0 then
-                       begin
-                         strItemFileName    := XWF_GetItemName(nItemID);
-                         strOCRItemFileName := strItemFileName + '_OCR-EXTRACT.txt';
-                         New(pSrcBuffer);
-                         pSrcBuffer.nStructSize := SizeOf(TSrcInfo);  // Should return 16 on 32-bit systems
-                         pSrcBuffer.nBufSize    := Length(strOCRResult);
-                         pSrcBuffer.pBuffer     := @strOCRResult[1];
-
-                         OCRFileID := XWF_CreateFile(@strOCRItemFileName, $00000010, nItemID, pSrcBuffer);
-                         if OCRFileID > 0 then
-                           begin
-                             // if parsed text is recovered, assign a child file item, then
-                             // mark parent with the "has children" flag (0x02)
-                             XWF_SetItemParent(OCRFileID, nItemID);
-                             ParentHasChildren := XWF_SetItemInformation(nItemID, XWF_ITEM_INFO_FLAG_HASCHILDREN, $00000002);
-
-                             // Add Report Table for the current itemID to
-                             // highlight that OCR text data available for it
-                             // Note this is not a RT for the OCR'd text - for its parent.
-                             lpReportTableString := 'OCR text extracted to child';
-                             RTAdditionSuccess := XWF_AddToReportTable(nItemID, @lpReportTableString[0], $04);
-                             lpReportTableString := '';
-                             // Add a report table for the new OCR Item itself too
-                             lpReportTableString := 'OCR text extracted from parent';
-                             RTAdditionSuccess := XWF_AddToReportTable(OCRFileID, @lpReportTableString[0], $04);
-                             slLogFile.Add(IntToStr(OCRFileID) + #9 + strOCRItemFileName + #9 + ' text extracted from ' + #9 + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')');
-                           end
-                           else
-                           begin
-                             slLogFile.Add(XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ') was examined but a new OCR item could not be added to the case');
-                           end;
-                         // Free memory used by the source data buffer
-                         Dispose(pSrcBuffer);
-                       end // End of strOCRResult validation check
-                     else
-                       begin
-                         // Free memory used by the open item ID here too, even if read was unsuccessfull
-                         XWF_Close(hOpenResult);
-                         strItemFileName := XWF_GetItemName(nItemID);
-                         outputmessage := 'Unable to extract OCR data from file ' + strItemFileName + ' (Item ' + IntToStr(nItemID) + ')';
-                         lstrcpyw(Buf, @outputmessage[0]);
-                         XWF_OutputMessage(@Buf[0], 0);
-                         slLogFile.Add(IntToStr(nItemID) + #9 + strItemFileName + #9 + ' was examined but no OCR data could be extracted.');
-                       end;
-                   end;
-                 Tesseract.Free;
-               end // BytesWritten > 0
-              else
-                begin
-                  outputmessage := 'Unable to write temp file for OCR recognition for file: ' + IntToStr(nItemID);
-                  lstrcpyw(Buf, @outputmessage[0]);
-                  XWF_OutputMessage(@Buf[0], 0);
-                  slLogFile.Add(XWF_GetItemName(nItemID) + #9 + IntToStr(nItemID) + #9 + ' could not be copied and written out from XWF for OCR analysis.');
-                end;
-             end // intBytesRead > 0
+                PicStream.Free;
+              end
             else
               begin
                 // No need for XWF_Close(hOpenResult) because the item was not opened anyway
@@ -517,11 +506,7 @@ begin
             slLogFile.Add('Tesseract or Leptonica OCR Libraries could not be loaded when examining file ' + XWF_GetItemName(nItemID) + ' (Item ' + IntToStr(nItemID) + ').');
           end;
       finally
-        // End of OCRInstance creation try finally statement. Cleanup.
-        if Length(scratchfilename) > 0 then
-        begin
-          DelFileOK := DeleteFile(IncludeTrailingPathDelimiter(OutputFolder) + scratchfilename);
-        end;
+        // End of TesseractInit so nothing to free here
       end;
     end
     else IsAValidPictureFile := false;
@@ -530,8 +515,8 @@ begin
   // The ALL IMPORTANT 0 return value!!
   result := 0;
 
-  { Method 2 : The Golden Goose Solution : Avoids using filestreams and instead
-    uses a buffer of XWF_GetRasterImage. But, not using it for now because OCR
+  { Method 2 : Still the Golden Goose Solution :
+    Uses a buffer of XWF_GetRasterImage. But, not using it for now because OCR
     recognition wasn't working properly on the output. And I cant work out why.
     Most likely is the Number of Bytes per Line or Resolution Value being wrong.
 
@@ -613,6 +598,11 @@ var
 begin
   FillChar(Buf, SizeOf(Buf), $00);
   FillChar(OutputFileName, SizeOf(OutputFileName), $00);
+
+  if TesseractInit then
+  begin
+    Tesseract.Free
+  end;
 
   if DirectoryExists(OutputFolder) then
     begin

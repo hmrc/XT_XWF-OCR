@@ -1,7 +1,7 @@
 # XT_XWF-OCR 
 
 ### XT_XWF-OCR X-Tension by Ted Smith
-   Most recently tested on XWF : v20.0<br>
+   Most recently tested on XWF : v20.6<br>
 
 ### Functionality Overview
   The X-Tension will examine every picture file (or tagged picture file).<br>
@@ -25,7 +25,7 @@
   https://aka.ms/vs/16/release/vc_redist.x64.exe - 64-bit<br>
 
   All files must be held in a folder called \bin.<br>
-    1) XT_XWF_OCR.DLL must be in the root of \bin<br>
+    1) XT_XWF_OCR_x64.DLL (or XT_XWF_OCR_x86.DLL) must be in the root of \bin<br>
     2) libtesseract32.dll must be in the root of \bin<br>
     3) libtesseract64.dll must be in the root of \bin<br>
     4) "eng.traineddata" must be in a subfolder of \bin, called "\tessdata", i.e. \YourFolder\bin\tessdata<br>
@@ -61,7 +61,6 @@
   PRODUCTION USE STATUS : Proof of Concept Prototype<br>
 
 ### TODOs
-     Use native XWF memory streams instead of writing the files out and OCR'ing them and then pulling the output back in. <br>
      User manual etc<br>
 
 ### Licenses
