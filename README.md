@@ -1,92 +1,92 @@
 # XT_XWF-OCR 
 
-### XT_XWF-OCR X-Tension by Ted Smith
-   Most recently tested on XWF : v20.6<br>
+### XT_XWF-OCR X-Tension by Ted Smith with contributions from Sam Lockwood
+   Most recently tested on XWF : v20.6
 
 ### Functionality Overview
-  The X-Tension will examine every picture file (or tagged picture file).<br>
+  The X-Tension will examine every picture file (or tagged picture file).
   If it is a confirmed picture file larger than 2Kb, it will attempt to
-  conduct OCR and generate a text file containing the output.<br>
-  These can be filtered for recursively post execution using a filename filter "*_OCR-EXTRACT.txt"<br>
+  conduct OCR and generate a text file containing the output.
+  These can be filtered for recursively post execution using a filename filter "OCREXTRACT-*"
   For better results, tag picture files that look OCR'able first, and then run
   RVS over tagged items only. If you run this over EVERY picture file you
-  WILL waste time....a lot of it.<br>
-  
-  NOT MULTI-THREAD ENABLED. If you use more threads, it will appear to hang. <br>
+  WILL waste time....a lot of it.
+
+  NOT MULTI-THREAD ENABLED. If you use more threads, it will appear to hang.
 
 ### Requirements
-  This X-Tension is designed for use only with X-Ways Forensics v19.1 or higher<br>
-  This X-Tension is not designed for use on Linux or OSX platforms.<br>
+  This X-Tension is designed for use only with X-Ways Forensics v19.1 or higher
+  This X-Tension is not designed for use on Linux or OSX platforms.
 
-  ==== All users Note ====<br>
+  === All users Note ====
 
-  Host OS requires Microsoft C++ 2017 Redistributable Package<br>
-  https://aka.ms/vs/16/release/vc_redist.x86.exe - 32-bit<br>
-  https://aka.ms/vs/16/release/vc_redist.x64.exe - 64-bit<br>
+  Host OS requires Microsoft C++ 2017 Redistributable Package
+  https://aka.ms/vs/16/release/vc_redist.x86.exe - 32-bit
+  https://aka.ms/vs/16/release/vc_redist.x64.exe - 64-bit
 
-  All files must be held in a folder called \bin.<br>
-    1) XT_XWF_OCR_x64.DLL (or XT_XWF_OCR_x86.DLL) must be in the root of \bin<br>
-    2) libtesseract32.dll must be in the root of \bin<br>
-    3) libtesseract64.dll must be in the root of \bin<br>
-    4) "eng.traineddata" must be in a subfolder of \bin, called "\tessdata", i.e. \YourFolder\bin\tessdata<br>
-  X-Tension must be executed via the RVS process of XWF (F10)<br>
+  All files must be held in a folder called \bin.
+    1) XT_XWF_OCR.DLL must be in the root of \bin
+    2) libtesseract32.dll must be in the root of \bin
+    3) libtesseract64.dll must be in the root of \bin
+    4) "eng.traineddata" must be in a subfolder of \bin, called "\tessdata", i.e. \YourFolder\bin\tessdata
+  X-Tension must be executed via the RVS process of XWF (F10)
 
-  === Software developers note: ===<br>
-  LCLBase Package is required for project compilation<br>
+  === Software developers note: ===
+  LCLBase Package is required for project compilation
 
   msys2 (https://www.msys2.org/) is required to compile DLL's of
-  Leptonica and TesseractOCR.<br>
+  Leptonica and TesseractOCR.
 
   However, as of 08/07/21, a single DLL for both x64 and x86 is bundled providing
   Tesseract v4.1.1 capability, supplying both the Tesseract and Leptonica
   functionality combined without the need for about a dozen other DLLs.
-  This is with great thanks to the libTesseract project :<br>
-  https://github.com/ollydev/libTesseract<br>
+  This is with great thanks to the libTesseract project :
+  https://github.com/ollydev/libTesseract
 
-  But others wishing to pursue the route manually can do so via :<br>
+  But others wishing to pursue the route manually can do so via :
 
-  Leptonica<br>
-  https://packages.msys2.org/package/mingw-w64-x86_64-leptonica?repo=mingw64<br>
+  Leptonica
+  https://packages.msys2.org/package/mingw-w64-x86_64-leptonica?repo=mingw64
 
-  TesseractOCR :<br>
-  https://packages.msys2.org/package/mingw-w64-x86_64-tesseract-ocr?repo=mingw64<br>
+  TesseractOCR :
+  https://packages.msys2.org/package/mingw-w64-x86_64-tesseract-ocr?repo=mingw64
 
-  Build using MSYS2 terminal as follows, which should generate DLL's in the MSYS2 bin folder :<br>
+  Build using MSYS2 terminal as follows, which should generate DLL's in the MSYS2 bin folder :
 
-  pacman -S mingw-w64-x86_64-leptonica<br>
+  pacman -S mingw-w64-x86_64-leptonica
 
-  pacman -S mingw-w64-x86_64-tesseract-ocr<br>
+  pacman -S mingw-w64-x86_64-tesseract-ocr
 
 ### Usage Disclaimer
-  PRODUCTION USE STATUS : Proof of Concept Prototype<br>
+  PRODUCTION USE STATUS : Proof of Concept Prototype
 
 ### TODOs
-     User manual etc<br>
+     User manual etc
 
 ### Licenses
   This code is open source software licensed under the
   [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
-  and The Open Government Licence (OGL) v3.0.<br>
+  and The Open Government Licence (OGL) v3.0.
   (http://www.nationalarchives.gov.uk/doc/open-government-licence and
-   http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).<br>
+   http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
   Tesseract, which this code relies upon, is an open source text recognition (OCR)
-  Engine from Google, available under the Apache 2.0 license<br>
-  http://www.apache.org/licenses/LICENSE-2.0<br>
+  Engine from Google, available under the Apache 2.0 license
+  http://www.apache.org/licenses/LICENSE-2.0
 
   TTesseractOCR4, which this code relies upon, is an Object Orientated Pascal binding for Tesseract-ocr 4,
-  an optical character recognition engine licensed under MIT<br>
-  https://github.com/r1me/TTesseractOCR4<br>
+  an optical character recognition engine licensed under MIT
+  https://github.com/r1me/TTesseractOCR4
 
   libTesseract, which this code relies upon, is courtesy of
-  https://github.com/ollydev/libTesseract (no license stated as of 08/07/21)<br>
+  https://github.com/ollydev/libTesseract (no license stated as of 08/07/21)
 
   Leptonica, which this code relies upon, is licensed by Dan Bloomberg under a
-  Creative Commons Attribution 3.0 United States License.<br>
-  https://github.com/DanBloomberg/leptonica<br>
+  Creative Commons Attribution 3.0 United States License.
+  https://github.com/DanBloomberg/leptonica
 
 
 ### Collaboration
   Collaboration is welcomed, particularly from Delphi or Freepascal developers.
-  This version was created using the Lazarus IDE v2.0.12 and Freepascal v3.2.0.
-  (www.lazarus-ide.org), x64 and x86 edition  <br>
+  This version was created using the Lazarus IDE and Freepascal
+  (www.lazarus-ide.org) and contains helpful collaborative improvements from Sam Lockwood. <br>
